@@ -1,7 +1,19 @@
-// Simple brainfuck++ interpreter
+{ Copyright 2016 Mohamed Aziz Knani }
+
+{ Licensed under the Apache License, Version 2.0 (the "License"); }
+{ you may not use this file except in compliance with the License. }
+{ You may obtain a copy of the License at }
+
+{     http://www.apache.org/licenses/LICENSE-2.0 }
+
+{ Unless required by applicable law or agreed to in writing, software }
+{ distributed under the License is distributed on an "AS IS" BASIS, }
+{ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. }
+{ See the License for the specific language governing permissions and }
+{ limitations under the License. }
+
 
 {$COPERATORS ON}
-
 
 Uses Crt;
 type
@@ -39,36 +51,43 @@ begin
 end;
 
 Procedure Evaluator( A : Arr; // The cell segments array
-		    sourecode : AnsiString; 
-		    ptr, // current source code pointer
-		    matchingPar: Integer; // the matching pair index
-                    currPtr:	    Integer // current Array index
+		    sourecode : AnsiString
 		    );
+type
+   P = record
+	  endp, startp : Integer;
+       end;	       
 var
-   b : Byte;
+   Stack   : Array [1..100] of P;
+   Pointer : Integer;
+   
+   Procedure StackInit;
+   begin
+      Pointer := 0;
+   end;
+
+   Function StackPop: P;
+   begin
+      Pointer -= 1;
+      StackPop := Stack[Pointer+1];
+   end;
+
+   Procedure StackInsert(element : P );
+   begin
+      Pointer += 1;
+      Stack[Pointer] := element;
+   end;
+
+var
+   b	   : Byte;
+   ptr	   : Integer;
+   currPtr : Integer;
+   e	   : P;
 begin
-   if ptr>=0 then begin
-      Writeln(sourceCode[ptr], ' ', matchingPar, ' ', currPtr, ' ', A[currPtr]);
-      // if the source code is done then Halt
-      if ptr>length(sourceCode) then
-	 Halt(0);
-      // if there is a loop
-      if sourcecode[ptr] = '[' then begin
-	 matchingPar := ptr;
-      end;
- 
-      if sourceCode[ptr]='[' then begin
-	 Evaluator(A, sourceCode, ptr+1, matchingPar , currPtr);
-      end;
-
-      // if there is loop end check if cell at pointer is zero or not?
-      if sourceCode[ptr]=']' then begin
-	 if A[currPtr]<>0 then
-	    Evaluator(A, sourceCode, matchingPar, -1,currPtr
-		      );
-	 
-      end;
-
+   ptr := 1;
+   currPtr := 0;
+   StackInit;   
+   While (ptr<=Length(sourceCode)) do begin
       case sourceCode[ptr] of
 	'<' : currPtr -= 1;
 	'>' : currPtr += 1;
@@ -84,13 +103,34 @@ begin
 	   A[currPtr] := b;
 	end;
 	'.' : begin
-	   Write(chr(A[currPtr]) ,' ');
+	   Write(chr(A[currPtr]));
 	end;
       end;
-      Evaluator(
-		A, sourceCode, ptr+1, matchingPar, currPtr
-		);
-      
+      if sourceCode[ptr]='[' then begin
+	 e.startp := ptr;
+	 // matches first seen
+	 e.endp := Pos(']', Copy(sourceCode, ptr, Length(sourceCode) - ptr +1 ));
+	 if e.endp = 0 then begin
+	    Writeln('Non matching loop');
+	    Halt(1);
+	 end;
+	 StackInsert(e);
+	 
+	 if A[currPtr]=0 then begin
+	    e := StackPop;
+	    ptr := e.endp;
+	 end;
+      end
+      else if sourceCode[ptr] = ']' then begin
+	 if A[currPtr]<>0 then begin
+	    e := StackPop;
+	    ptr := e.startp;
+	    StackInsert(e);
+	 end
+         else
+	    StackPop;
+      end;
+      ptr += 1;
    end;
 end;
 
@@ -117,10 +157,8 @@ begin
       sourceCode += line;
    end;
    sourceCode := codeCLeaner(sourcecode);
-   
-   Writeln(sourcecode);
 
    Init(A);
    
-   Evaluator(A, sourceCode, 1, -1, 0);
+   Evaluator(A, sourceCode);
 end.
