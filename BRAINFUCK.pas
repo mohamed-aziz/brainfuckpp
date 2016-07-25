@@ -20,7 +20,6 @@ type
    Arr	  = Array [0..1000] of Byte;
 
 var
-   T		    : Arr;
    filename	    : String;
    sourcefile	    : Text;
    sourceCode, line : AnsiString;
@@ -58,7 +57,7 @@ type
 	  endp, startp : Integer;
        end;	       
 var
-   Stack   : Array [1..100] of P;
+   Stack   : Array [1..100] of Integer;
    Pointer : Integer;
    
    Procedure StackInit;
@@ -66,13 +65,13 @@ var
       Pointer := 0;
    end;
 
-   Function StackPop: P;
+   Function StackPop: Integer;
    begin
       Pointer -= 1;
       StackPop := Stack[Pointer+1];
    end;
 
-   Procedure StackInsert(element : P );
+   Procedure StackInsert(element : integer );
    begin
       Pointer += 1;
       Stack[Pointer] := element;
@@ -82,50 +81,37 @@ var
    b	   : Byte;
    ptr	   : Integer;
    currPtr : Integer;
-   e	   : P;
+
 begin
    ptr := 1;
    currPtr := 0;
-   StackInit;   
+   StackInit;
    While (ptr<=Length(sourceCode)) do begin
       case sourceCode[ptr] of
 	'<' : currPtr -= 1;
 	'>' : currPtr += 1;
-	'+' : A[currPtr] += 1;
-	'-' : A[currPtr] -= 1;
-	';' : begin
+	'+' : if currPtr>=0 then A[currPtr] += 1;
+	'-' : if currPtr>=0 then A[currPtr] -= 1;
+	';' : if currPtr>=0 then begin
 	   Read(b);
 	   A[currPtr] := b;
 	end;
-	':': Write(A[currPtr], ' ');
-	',': begin
+	':': if currPtr>=0 then Write(A[currPtr], ' ');
+	',': if currPtr>=0 then begin
 	   Read(b);
 	   A[currPtr] := b;
 	end;
-	'.' : begin
+	'.' : if currPtr>=0 then begin
 	   Write(chr(A[currPtr]));
 	end;
       end;
       if sourceCode[ptr]='[' then begin
-	 e.startp := ptr;
-	 // matches first seen
-	 e.endp := Pos(']', Copy(sourceCode, ptr, Length(sourceCode) - ptr +1 ));
-	 if e.endp = 0 then begin
-	    Writeln('Non matching loop');
-	    Halt(1);
-	 end;
-	 StackInsert(e);
-	 
-	 if A[currPtr]=0 then begin
-	    e := StackPop;
-	    ptr := e.endp;
-	 end;
+	 StackInsert(ptr);
       end
       else if sourceCode[ptr] = ']' then begin
-	 if A[currPtr]<>0 then begin
-	    e := StackPop;
-	    ptr := e.startp;
-	    StackInsert(e);
+	 if (currPtr>=0) and (A[currPtr]<>0) then begin
+	    ptr := StackPop;
+	    StackInsert(ptr);
 	 end
          else
 	    StackPop;
