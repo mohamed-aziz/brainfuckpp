@@ -1,7 +1,7 @@
 
 # Brainfuck++
 
-Brainfuck++ is inspired by (http://www.codeabbey.com/index/wiki/brainfuck)[codeabbey's brainfuck++ description], it's basically brainfuck with some "improvements", it's written in ol'good Pascal.
+Brainfuck++ is inspired by [codeabbey's brainfuck++ description](http://www.codeabbey.com/index/wiki/brainfuck), it's basically brainfuck with some "improvements", it's written in ol'good Pascal.
 
 ## Install it!
 
